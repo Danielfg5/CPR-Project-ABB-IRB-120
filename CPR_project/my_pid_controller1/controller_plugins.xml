@@ -1,0 +1,3 @@
+<library path="lib/libmy_pid_controller1_lib">
+    <class name="my_pid_controller1/MyPidController1" type="my_pid_controller1_ns::MyPidController1" base_class_type="controller_interface::ControllerBase"/>
+</library>

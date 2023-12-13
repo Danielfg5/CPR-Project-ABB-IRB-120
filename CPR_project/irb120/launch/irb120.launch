@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<launch>
+    
+    <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
+
+    <group ns="/irb120">
+
+        <!-- Load robot model -->
+        <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find irb120)/urdf/irb120.urdf'"/>
+        <arg name="x" default="0"/>
+        <arg name="y" default="0"/>
+        <arg name="z" default="0"/>
+
+        <!-- Spawn robot model -->
+        <node name="mybot_spawn" pkg="gazebo_ros" type="spawn_model" output="screen" args="-urdf -param robot_description -model irb120 -x $(arg x) -y $(arg y) -z $(arg z)"/>
+
+        <!-- Load controller parameters -->
+        <rosparam command="load" file="$(find irb120)/config/joints_controllers.yaml"/>
+
+        <!-- Launch controller -->
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/irb120"
+            args="--namespace=/irb120 joint_state_controller joint1_position_controller joint2_position_controller
+            joint3_position_controller joint4_position_controller joint5_position_controller joint6_position_controller --timeout 60">
+        </node>
+
+        <!-- Launch robot_state_publisher to publish TF data -->
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+            <remap from="/joint_states" to="/irb120/joint_states"/>
+        </node>
+
+        <!-- Launch rviz -->
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find irb120)/launch/irb120.rviz"/>
+
+    </group>
+
+</launch>

@@ -1,0 +1,45 @@
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  joint1_position_controller:
+    type: my_pid_controller1/MyPidController1
+    joint: joint_1
+    gain: 200.0
+    integral: 2.0
+    derivative: 20.0 
+
+  joint2_position_controller:
+    type: my_pid_controller1/MyPidController1
+    joint: joint_2
+    gain: 350.0
+    integral: 5.0
+    derivative: 45.0
+
+  joint3_position_controller:
+    type: my_pid_controller1/MyPidController1
+    joint: joint_3
+    gain: 200.0
+    integral: 1.0
+    derivative: 10.0
+
+  joint4_position_controller:
+    type: my_pid_controller1/MyPidController1
+    joint: joint_4
+    gain: 70.0
+    integral: 1.0
+    derivative: 1.0
+
+  joint5_position_controller:
+    type: my_pid_controller1/MyPidController1
+    joint: joint_5
+    gain: 50.0
+    integral: 0.5
+    derivative: 0.5
+
+  joint6_position_controller:
+    type: my_pid_controller1/MyPidController1
+    joint: joint_6
+    gain: 30.0 
+    integral: 0.3
+    derivative: 0.5
