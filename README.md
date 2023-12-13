@@ -4,8 +4,8 @@ Proyecto de la asignatura Control y Programación de Robots del grado GIERM. Con
 
 ## How to install:
 
-Copy folder CPR_project into {ros_workspace}/src
-Then, inside {ros_workspace}, launch:
+Copy folder CPR_project into {ros_workspace}/src.  
+Then, inside {ros_workspace}, launch:  
     catkin_make
 
 ## How to launch simulation:
