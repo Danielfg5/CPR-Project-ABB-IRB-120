@@ -2,6 +2,9 @@ Changelog:
 	
 	V0.0 : initial version. Joints individually controlled by PID controllers from libraries.
 	V0.1 : joint_1 now controlled with custom P controller my_pid_controller1. Added my_pid_controller1 package.
+	V0.2 : modified my_pid_controller1 to control joint_1 and joint_2 simultaneously (2 independent P controllers in one controller plugin),
+	       just to test how to control multiple joints with one controller plugin.
+	V0.3 : extended my_pid_controller1 to PID. Every joint is now controlled by an instance of my_pid_controller1.
 
 Notes:
 
@@ -13,8 +16,7 @@ Description:
 
 	Package with only the model of the robot (taken from abb_irb120_support package and simplified removing unnecessary stuff)
 	The joints are singularly controlled.
-	Joints 2-6 use standard PID controllers from libraries.
-	Joint 1 uses a custom written P controller (my_pid_controller1) to test the possibility of writing controllers from scratch.
+	All joints are controlled with custom PID controller my_pid_controller1.
 
 How to "install":
 
