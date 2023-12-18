@@ -11,13 +11,14 @@ namespace my_pid_controller1_ns {
 
         bool init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle &n) {
             
-            std::string my_joint;
-            if(!n.getParam("joint", my_joint)){
+            /* --- Load parameters from the parameter server (set through joints_controllers.yaml) --- */
+            std::string joint_name_;
+            if(!n.getParam("joint", joint_name_)){
                 ROS_ERROR("Could not find joint name.");
                 return false;
             }
-            joint_ = hw->getHandle(my_joint);
-            command_ = joint_.getPosition();
+            joint_ = hw->getHandle(joint_name_);
+            command_ = joint_.getPosition();    // Initialize desired (target) position to current position
 
             if(!n.getParam("gain", gain_)){
                 ROS_ERROR("Could not find parameter value (gain).");
@@ -32,23 +33,24 @@ namespace my_pid_controller1_ns {
                 ROS_ERROR("Could not find parameter value (derivative).");
                 return false;
             }
+
+            /* --- Initialize subscriber for desired position --- */
             sub_command_ = n.subscribe<std_msgs::Float64>("command", 1, &MyPidController1::setCommandCB, this);
+
+            /* --- Initialize PID controller --- */
             pidController_.initPid(gain_, integral_, derivative_, 100.0, -100.0);
-            previousTime = ros::Time::now();
-            currentTime = ros::Time::now();
+
             return true;
         }
 
         void update(const ros::Time& time, const ros::Duration& period){
             
             double error = command_ - joint_.getPosition();
-            currentTime = ros::Time::now();
-            deltaT = currentTime - previousTime;
-            double commanded_effort = pidController_.computeCommand(error, deltaT);
+            double commanded_effort = pidController_.computeCommand(error, period);
             joint_.setCommand(commanded_effort);
-            previousTime = currentTime;
         }
 
+        /* --- Callback function for desired position subscriber --- */
         void setCommandCB(const std_msgs::Float64ConstPtr& msg){
 
             command_ = msg->data;
@@ -64,9 +66,6 @@ namespace my_pid_controller1_ns {
             double derivative_;
             double command_;
             ros::Subscriber sub_command_;
-            ros::Time previousTime;
-            ros::Time currentTime;
-            ros::Duration deltaT;
             control_toolbox::Pid pidController_;
     };
 
