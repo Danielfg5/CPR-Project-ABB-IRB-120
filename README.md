@@ -14,7 +14,7 @@ Then, inside {ros_workspace}, launch:
 The parameters for the controller in this simulation are located in "my_1dof_robot_moveit_config/config/ros_controllers.yaml"
 The joint can also be manually controlled by executing:  
 
-	rostopic pub -1 /pendulum_controller/q_des std_msgs/Float64 "data: Y"
+	rostopic pub -1 /pendulum_controller/q_des_command std_msgs/Float64 "data: Y"
 
 substituting Y with the joint position (rad)
 
