@@ -1,0 +1,3 @@
+<library path="lib/libmy_pid_6dof_lib">
+    <class name="my_pid_6dof/MyPid6Dof" type="my_pid_6dof_ns::MyPid6Dof" base_class_type="controller_interface::ControllerBase"/>
+</library>
