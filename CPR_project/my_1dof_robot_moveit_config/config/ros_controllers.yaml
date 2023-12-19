@@ -32,3 +32,7 @@ pendulum_controller:
       p: 200.0
       i: 2.0
       d: 20.0
+    model_params:
+      I: 0.2
+      b: 1.0
+      c: 0.0
