@@ -14,6 +14,6 @@ Then, inside {ros_workspace}, launch:
 
 ## How to set desired joint positions:
 
-	rostopic pub -1 /irb120/jointX_position_controller/command std_msgs/Float64 "data: Y"
+	rostopic pub -1 /irb120/joints_positions_controller/commandX std_msgs/Float64 "data: Y"
 
 substituting X with the joint number (1-6) and Y with the joint position (rad)
