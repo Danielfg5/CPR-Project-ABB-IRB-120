@@ -13,6 +13,7 @@ Then, inside {ros_workspace}, launch:
 	roslaunch my_1dof_robot_moveit_config my_moveit_gazebo.launch  
 The parameters for the controller in this simulation are located in "my_1dof_robot_moveit_config/config/ros_controllers.yaml"
 The joint can also be manually controlled by executing:  
+
 	rostopic pub -1 /pendulum_controller/command std_msgs/Float64 "data: Y"
 
 substituting Y with the joint position (rad)
@@ -22,6 +23,7 @@ substituting Y with the joint position (rad)
 	roslaunch irb120_moveit_config my_moveit_gazebo.launch  
 The parameters for the controller in this simulation are located in "irb120_moveit_config/config/ros_controllers.yaml"
 The joints can also be manually controlled by executing:  
+
 	rostopic pub -1 /arm_group_controller/commandX std_msgs/Float64 "data: Y"
 
 substituting X with the joint number (1-6) and Y with the joint position (rad)
