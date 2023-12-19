@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<launch>
+    
+    <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
+
+    <group ns="/my_1dof_robot">
+
+        <!-- Load robot model -->
+        <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find my_1dof_robot)/urdf/my_1dof_robot.urdf'"/>
+        <arg name="x" default="0"/>
+        <arg name="y" default="0"/>
+        <arg name="z" default="0"/>
+
+        <!-- Spawn robot model -->
+        <node name="mybot_spawn" pkg="gazebo_ros" type="spawn_model" output="screen" args="-urdf -param robot_description -model my_1dof_robot -x $(arg x) -y $(arg y) -z $(arg z)"/>
+
+        <!-- Load controller parameters -->
+        <rosparam command="load" file="$(find my_1dof_robot)/config/joints_controllers.yaml"/>
+
+        <!-- Launch controller -->
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/my_1dof_robot"
+            args="--namespace=/my_1dof_robot joint_state_controller joint_position_controller --timeout 60">
+        </node>
+
+        <!-- Launch robot_state_publisher to publish TF data -->
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+            <remap from="/joint_states" to="/my_1dof_robot/joint_states"/>
+        </node>
+
+        <!-- Launch rviz -->
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find my_1dof_robot)/launch/my_1dof_robot.rviz"/>
+
+    </group>
+
+</launch>

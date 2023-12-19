@@ -1,0 +1,8 @@
+controller_list:
+  - name: fake_pendulum_controller
+    type: $(arg fake_execution_type)
+    joints:
+      - joint_1
+initial:  # Define initial robot poses.
+  - group: pendulum
+    pose: zero

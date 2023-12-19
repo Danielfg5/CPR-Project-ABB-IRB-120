@@ -26,7 +26,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/base_link.stl"/>
+        <mesh filename="package://irb120/meshes/visual/base_link.stl"/>
       </geometry>
       <material name="">
         <color rgba="0.9254902 0.9254902 0.9058824 1"/>
@@ -35,7 +35,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/base_link.stl"/>
+        <mesh filename="package://irb120/meshes/visual/base_link.stl"/>
       </geometry>
       <material name="">
         <color rgba="1 1 0 1"/>
@@ -51,7 +51,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_1.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_1.stl"/>
       </geometry>
       <material name="">
         <color rgba="0.9254902 0.9254902 0.9058824 1"/>
@@ -60,7 +60,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_1.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_1.stl"/>
       </geometry>
       <material name="">
         <color rgba="1 1 0 1"/>
@@ -76,7 +76,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_2.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_2.stl"/>
       </geometry>
       <material name="">
         <color rgba="0.9254902 0.9254902 0.9058824 1"/>
@@ -85,7 +85,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_2.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_2.stl"/>
       </geometry>
       <material name="">
         <color rgba="1 1 0 1"/>
@@ -101,7 +101,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_3.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_3.stl"/>
       </geometry>
       <material name="">
         <color rgba="0.9254902 0.9254902 0.9058824 1"/>
@@ -110,7 +110,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_3.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_3.stl"/>
       </geometry>
       <material name="">
         <color rgba="1 1 0 1"/>
@@ -126,7 +126,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_4.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_4.stl"/>
       </geometry>
       <material name="">
         <color rgba="0.9254902 0.9254902 0.9058824 1"/>
@@ -135,7 +135,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_4.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_4.stl"/>
       </geometry>
       <material name="">
         <color rgba="1 1 0 1"/>
@@ -151,7 +151,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_5.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_5.stl"/>
       </geometry>
       <material name="">
         <color rgba="0.9254902 0.9254902 0.9058824 1"/>
@@ -160,7 +160,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_5.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_5.stl"/>
       </geometry>
       <material name="">
         <color rgba="1 1 0 1"/>
@@ -176,7 +176,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_6.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_6.stl"/>
       </geometry>
       <material name="">
         <color rgba="0.1882353 0.1960784 0.2039216 1"/>
@@ -185,7 +185,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://irb120_description/meshes/visual/link_6.stl"/>
+        <mesh filename="package://irb120/meshes/visual/link_6.stl"/>
       </geometry>
       <material name="">
         <color rgba="1 1 0 1"/>

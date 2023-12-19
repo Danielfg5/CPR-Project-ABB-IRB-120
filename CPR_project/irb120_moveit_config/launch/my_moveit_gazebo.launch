@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+    <include file="$(find irb120_moveit_config)/launch/gazebo.launch"/>
+    <include file="$(find irb120_moveit_config)/launch/moveit_rviz.launch"/>
+
+</launch>

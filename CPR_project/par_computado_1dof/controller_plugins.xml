@@ -1,0 +1,3 @@
+<library path="lib/libpar_computado_1dof_lib">
+    <class name="par_computado_1dof/ParComputado1Dof" type="par_computado_1dof_ns::ParComputado1Dof" base_class_type="controller_interface::ControllerBase"/>
+</library>
