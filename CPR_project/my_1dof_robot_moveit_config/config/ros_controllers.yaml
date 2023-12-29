@@ -29,14 +29,14 @@ pendulum_controller:
 
   joint_1_control_params:
     pid:
-      # p: 400.0
-      # i: 30.0
-      # d: 20.0
-      p: 100.0
+      p: 400.0
       i: 0.0
-      d: 10.0
+      d: 20.0
+      # p: 100.0
+      # i: 0.0
+      # d: 10.0
     model_params:
-      I: 0.2
+      I: 0.166717
       b: 1.0
       c: 0.0
       m: 0.5

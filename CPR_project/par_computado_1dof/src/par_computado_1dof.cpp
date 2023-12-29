@@ -94,6 +94,9 @@ namespace par_computado_1dof_ns {
             pub_fb_torque_ = n.advertise<std_msgs::Float64>("fb_torque" , 1);
             pub_comm_effort_ = n.advertise<std_msgs::Float64>("commanded_effort" , 1);
             pub_error_= n.advertise<std_msgs::Float64>("error" , 1);
+            pub_p_error_ = n.advertise<std_msgs::Float64>("p_error" , 1);
+            pub_i_error_ = n.advertise<std_msgs::Float64>("i_error" , 1);
+            pub_d_error_ = n.advertise<std_msgs::Float64>("d_error" , 1);
 
             /* --- Initialize action server --- */
             action_server_.reset(new ActionServer(n, "/pendulum_controller/follow_joint_trajectory", 
@@ -115,12 +118,12 @@ namespace par_computado_1dof_ns {
             double error = q_des_ - q_;
             double derror = dq_des_ - dq_;
             
-            double computed_torque = model_params_.b * dq_ - 0.5*model_params_.m*g*model_params_.l*sin(q_); // + c * sign(dq_) //TODO: aggiungi forza peso
-            double feedback_torque = ddq_des_ + pidController_.computeCommand(error, derror, period);
-            
+            double computed_torque = model_params_.b * dq_ - 0.5*model_params_.m*g*model_params_.l*sin(q_);
+            // double feedback_torque = ddq_des_ + pidController_.computeCommand(error, derror, period);
+            double feedback_torque =  pidController_.computeCommand(error, derror, period);
             // double feedback_torque = ddq_des_ + pid_params_.p * error + pid_params_.d * derror;
             
-            //double commanded_effort = pidController_.computeCommand(error, period);
+            // TODO: modify ddq_des_ computation due to error in Moveit
 
             double commanded_effort = model_params_.I * feedback_torque + computed_torque;
             joint_.setCommand(commanded_effort);
@@ -132,6 +135,11 @@ namespace par_computado_1dof_ns {
             std_msgs::Float64 fb_torque_msg;
             std_msgs::Float64 comm_effort_msg;
             std_msgs::Float64 error_msg;
+            std_msgs::Float64 p_error_msg;
+            std_msgs::Float64 i_error_msg;
+            std_msgs::Float64 d_error_msg;
+            double pe, ie, de;
+            pidController_.getCurrentPIDErrors(&pe, &ie, &de);
             q_des_msg.data = q_des_;
             dq_des_msg.data = dq_des_;
             ddq_des_msg.data = ddq_des_;
@@ -139,6 +147,9 @@ namespace par_computado_1dof_ns {
             fb_torque_msg.data = model_params_.I * feedback_torque;
             comm_effort_msg.data = commanded_effort;
             error_msg.data = error;
+            p_error_msg.data = pe;
+            i_error_msg.data = ie;
+            d_error_msg.data = de;
             pub_q_des_.publish(q_des_msg);
             pub_dq_des_.publish(dq_des_msg);
             pub_ddq_des_.publish(ddq_des_msg);
@@ -146,6 +157,9 @@ namespace par_computado_1dof_ns {
             pub_fb_torque_.publish(fb_torque_msg);
             pub_comm_effort_.publish(comm_effort_msg);
             pub_error_.publish(error_msg);
+            pub_p_error_.publish(p_error_msg);
+            pub_i_error_.publish(i_error_msg);
+            pub_d_error_.publish(d_error_msg);
         }
 
         /* --- Callback function for desired position subscriber (for manual control) --- */
@@ -198,6 +212,9 @@ namespace par_computado_1dof_ns {
             ros::Publisher pub_fb_torque_;
             ros::Publisher pub_comm_effort_;
             ros::Publisher pub_error_;
+            ros::Publisher pub_p_error_;
+            ros::Publisher pub_i_error_;
+            ros::Publisher pub_d_error_;
 
             control_toolbox::Pid pidController_;
 

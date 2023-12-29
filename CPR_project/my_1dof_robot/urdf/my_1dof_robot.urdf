@@ -36,7 +36,7 @@
     <inertial>
       <mass value="0.5"/>
       <origin xyz="0 0 0.5"/>
-      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      <inertia ixx="0.041717" ixy="0.0" ixz="0.0" iyy="0.041717" iyz="0.0" izz="0.0001"/>
     </inertial>
   </link>
 
@@ -47,7 +47,7 @@
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="base_link"/>
     <child link="link_1"/>
-    <limit effort="100" lower="-3.14" upper="3.14" velocity="3.14"/>
+    <limit effort="1000" lower="-3.14" upper="3.14" velocity="3.14"/>
     <axis xyz="1 0 0"/>
     <dynamics damping="1.0" friction="0.0"/>
   </joint>

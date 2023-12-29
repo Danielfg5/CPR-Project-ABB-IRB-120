@@ -1,7 +1,6 @@
+irb120_rviz:				irb120 in rviz
 pendulum_gazebo:			my_1dof_robot in gazebo
 pendulum_rviz_fortyfive:		my_1dof_robot in rviz with final pose 45° highlighted
-pendulum_rviz_planning_fortyfive	my_1dof_robot in rviz with trajectory from 0 to 45° planned
-pendulum_step_nograv:			step response with par_computado_1dof without gravity compensation, P=200,I=0,D=20
-pendulum_step_grav:			same as nograv but with gravity compensation and no friction in simulation model and controller model, P=200,I=0,D=15
-pendulum_step_comptorque_error:		step response which shows how the computed torque depends only on position and not on commanded velocity/acceleration
-pendulum_step_effort:			step response with computed torque corrected
+pendulum_rviz_planning_fortyfive:	my_1dof_robot in rviz with trajectory from 0 to 45° planned
+pend_step_1:				step response of pendulum with error in sign of gravity compensation
+pend_step_2:				step response of pendulum with gravity compensation corrected

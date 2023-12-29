@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
  <tabbed_widget parent="main_window" name="Main Window">
-  <Tab containers="1" tab_name="tab1">
+  <Tab tab_name="tab1" containers="1">
    <Container>
     <DockSplitter orientation="-" count="1" sizes="1">
      <DockArea name="...">
-      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-       <range top="0.811898" right="5.012000" bottom="-0.013037" left="0.000000"/>
+      <plot style="Lines" mode="TimeSeries" flip_y="false" flip_x="false">
+       <range left="7.280000" bottom="-0.100000" right="12.296000" top="0.100000"/>
        <limitY/>
        <curve color="#1f77b4" name="/joint_states/joint_1/position"/>
        <curve color="#d62728" name="/pendulum_controller/q_des/data"/>
@@ -15,16 +15,31 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="tab2">
+  <Tab tab_name="tab2" containers="1">
    <Container>
     <DockSplitter orientation="-" count="1" sizes="1">
      <DockArea name="...">
-      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-       <range top="69.643838" right="5.012000" bottom="-6.905795" left="0.012000"/>
+      <plot style="Lines" mode="TimeSeries" flip_y="false" flip_x="false">
+       <range left="7.295000" bottom="-0.100000" right="12.295000" top="0.100000"/>
        <limitY/>
-       <curve color="#1ac938" name="/pendulum_controller/fb_torque/data"/>
-       <curve color="#ff7f0e" name="/pendulum_controller/comp_torque/data"/>
-       <curve color="#f14cc1" name="/pendulum_controller/commanded_effort/data"/>
+       <curve color="#1ac938" name="/pendulum_controller/error/data"/>
+       <curve color="#ff7f0e" name="/pendulum_controller/i_error/data"/>
+       <curve color="#f14cc1" name="/pendulum_controller/d_error/data"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="tab3" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockArea name="...">
+      <plot style="Lines" mode="TimeSeries" flip_y="false" flip_x="false">
+       <range left="7.295000" bottom="-0.100000" right="12.295000" top="0.100000"/>
+       <limitY/>
+       <curve color="#9467bd" name="/pendulum_controller/comp_torque/data"/>
+       <curve color="#17becf" name="/pendulum_controller/fb_torque/data"/>
+       <curve color="#bcbd22" name="/pendulum_controller/commanded_effort/data"/>
       </plot>
      </DockArea>
     </DockSplitter>
@@ -37,7 +52,7 @@
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default delimiter="0" time_axis=""/>
+   <default time_axis="" delimiter="0"/>
   </plugin>
   <plugin ID="DataLoad MCAP"/>
   <plugin ID="DataLoad ROS bags">
