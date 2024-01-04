@@ -34,7 +34,7 @@ pendulum_controller:
       d: 20.0
       # p: 100.0
       # i: 0.0
-      # d: 10.0
+      # d: 20.0
     model_params:
       I: 0.166717
       b: 1.0

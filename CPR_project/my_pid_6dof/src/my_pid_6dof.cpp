@@ -63,8 +63,7 @@ namespace my_pid_6dof_ns {
                 }
 
                 /* --- Initialize PID controllers --- */
-                pidControllers_[i].initPid(pid_params_[i].p, pid_params_[i].i, pid_params_[i].d, 100.0, -100.0); // TODO: integrator limits, anti-windup
-                // pidControllers_[i].initPid(pid_params_[i].p, 0.0, 0.0, 100.0, -100.0);  // DEBUG
+                pidControllers_[i].initPid(pid_params_[i].p, pid_params_[i].i, pid_params_[i].d, 100.0, -100.0);
             }
 
             /* --- Initialize subscribers for desired positions (for manual control) --- */
