@@ -79,14 +79,12 @@ namespace par_computado_1dof_ns {
             }
 
             /* --- Initialize PID controller --- */
-            pidController_.initPid(pid_params_.p, pid_params_.i, pid_params_.d, 100.0, -100.0); // TODO: integrator limits, anti-windup
-            // pidController_.initPid(pid_params_.p, 0.0, 0.0, 100.0, -100.0);  // DEBUG
-            
+            pidController_.initPid(pid_params_.p, pid_params_.i, pid_params_.d, 100.0, -100.0);            
 
             /* --- Initialize subscriber for desired position (for manual control) --- */
             sub_q_des_ = n.subscribe<std_msgs::Float64>("q_des_command", 1, &ParComputado1Dof::setCommandCB, this);
 
-            /* --- Initialize publishers for desired pos, vel, acc coming from the planner (for datalogging purposes) --- */
+            /* --- Initialize publishers for datalogging purposes --- */
             pub_q_des_ = n.advertise<std_msgs::Float64>("q_des" , 1);
             pub_dq_des_ = n.advertise<std_msgs::Float64>("dq_des" , 1);
             pub_ddq_des_ = n.advertise<std_msgs::Float64>("ddq_des" , 1);
@@ -119,13 +117,9 @@ namespace par_computado_1dof_ns {
             double derror = dq_des_ - dq_;
             
             double computed_torque = model_params_.b * dq_ - 0.5*model_params_.m*g*model_params_.l*sin(q_);
-            // double feedback_torque = ddq_des_ + pidController_.computeCommand(error, derror, period);
-            double feedback_torque =  pidController_.computeCommand(error, derror, period);
-            // double feedback_torque = ddq_des_ + pid_params_.p * error + pid_params_.d * derror;
-            
-            // TODO: modify ddq_des_ computation due to error in Moveit
-
+            double feedback_torque = ddq_des_ + pidController_.computeCommand(error, derror, period);
             double commanded_effort = model_params_.I * feedback_torque + computed_torque;
+            
             joint_.setCommand(commanded_effort);
 
             std_msgs::Float64 q_des_msg;
@@ -184,7 +178,7 @@ namespace par_computado_1dof_ns {
             int n = traj.points.size();                    
             q_des_ = traj.points[n-1].positions[0];
             dq_des_ = traj.points[n-1].velocities[0];
-            ddq_des_ = traj.points[n-1].accelerations[0];
+            // ddq_des_ = traj.points[n-1].accelerations[0];
         }
 
         void cancelCB(GoalHandle gh)
