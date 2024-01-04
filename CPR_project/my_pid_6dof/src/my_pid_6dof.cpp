@@ -47,7 +47,7 @@ namespace my_pid_6dof_ns {
 
             for(int i=0; i<N_DOF; i++){
                 joints_[i] = hw->getHandle(joint_names_[i]);
-                commands_[i] = joints_[i].getPosition();        // Initialize desired (target) position to current position
+                q_des_[i] = joints_[i].getPosition();        // Initialize desired (target) position to current position
 
                 if (!n.getParam(joint_names_[i] + "_control_params/pid/p", pid_params_[i].p)){
                     ROS_ERROR_STREAM("Failed to get joint \"" << joint_names_[i] << "\" p parameter value.");
@@ -68,12 +68,12 @@ namespace my_pid_6dof_ns {
             }
 
             /* --- Initialize subscribers for desired positions (for manual control) --- */
-            sub_command1_ = n.subscribe<std_msgs::Float64>("command1", 1, &MyPid6Dof::setCommand1CB, this);
-            sub_command2_ = n.subscribe<std_msgs::Float64>("command2", 1, &MyPid6Dof::setCommand2CB, this);
-            sub_command3_ = n.subscribe<std_msgs::Float64>("command3", 1, &MyPid6Dof::setCommand3CB, this);
-            sub_command4_ = n.subscribe<std_msgs::Float64>("command4", 1, &MyPid6Dof::setCommand4CB, this);
-            sub_command5_ = n.subscribe<std_msgs::Float64>("command5", 1, &MyPid6Dof::setCommand5CB, this);
-            sub_command6_ = n.subscribe<std_msgs::Float64>("command6", 1, &MyPid6Dof::setCommand6CB, this);
+            sub_q1_des_ = n.subscribe<std_msgs::Float64>("q1_des_command", 1, &MyPid6Dof::set_q1_des_CB, this);
+            sub_q2_des_ = n.subscribe<std_msgs::Float64>("q2_des_command", 1, &MyPid6Dof::set_q2_des_CB, this);
+            sub_q3_des_ = n.subscribe<std_msgs::Float64>("q3_des_command", 1, &MyPid6Dof::set_q3_des_CB, this);
+            sub_q4_des_ = n.subscribe<std_msgs::Float64>("q4_des_command", 1, &MyPid6Dof::set_q4_des_CB, this);
+            sub_q5_des_ = n.subscribe<std_msgs::Float64>("q5_des_command", 1, &MyPid6Dof::set_q5_des_CB, this);
+            sub_q6_des_ = n.subscribe<std_msgs::Float64>("q6_des_command", 1, &MyPid6Dof::set_q6_des_CB, this);
 
             /* --- Initialize action server --- */
             action_server_.reset(new ActionServer(n, "/arm_group_controller/follow_joint_trajectory", 
@@ -88,36 +88,36 @@ namespace my_pid_6dof_ns {
         void update(const ros::Time& time, const ros::Duration& period){
             
             for(int i=0; i<N_DOF; i++){
-                double error = commands_[i] - joints_[i].getPosition();
+                double error = q_des_[i] - joints_[i].getPosition();
                 double commanded_effort = pidControllers_[i].computeCommand(error, period);
                 joints_[i].setCommand(commanded_effort);
             }
         }
 
         /* --- Callback functions for desired position subscribers (for manual control) --- */
-        void setCommand1CB(const std_msgs::Float64ConstPtr& msg){
+        void set_q1_des_CB(const std_msgs::Float64ConstPtr& msg){
 
-            commands_[0] = msg->data;
+            q_des_[0] = msg->data;
         }
-        void setCommand2CB(const std_msgs::Float64ConstPtr& msg){
+        void set_q2_des_CB(const std_msgs::Float64ConstPtr& msg){
 
-            commands_[1] = msg->data;
+            q_des_[1] = msg->data;
         }
-        void setCommand3CB(const std_msgs::Float64ConstPtr& msg){
+        void set_q3_des_CB(const std_msgs::Float64ConstPtr& msg){
 
-            commands_[2] = msg->data;
+            q_des_[2] = msg->data;
         }
-        void setCommand4CB(const std_msgs::Float64ConstPtr& msg){
+        void set_q4_des_CB(const std_msgs::Float64ConstPtr& msg){
 
-            commands_[3] = msg->data;
+            q_des_[3] = msg->data;
         }
-        void setCommand5CB(const std_msgs::Float64ConstPtr& msg){
+        void set_q5_des_CB(const std_msgs::Float64ConstPtr& msg){
 
-            commands_[4] = msg->data;
+            q_des_[4] = msg->data;
         }
-        void setCommand6CB(const std_msgs::Float64ConstPtr& msg){
+        void set_q6_des_CB(const std_msgs::Float64ConstPtr& msg){
 
-            commands_[5] = msg->data;
+            q_des_[5] = msg->data;
         }
 
         void goalCB(GoalHandle gh)
@@ -135,7 +135,7 @@ namespace my_pid_6dof_ns {
 
             int n = traj.points.size();            
             for (int i=0; i<6; i++){                
-                commands_[i] = traj.points[n-1].positions[i];
+                q_des_[i] = traj.points[n-1].positions[i];
             }
 
         }
@@ -153,14 +153,14 @@ namespace my_pid_6dof_ns {
 
         private:
             hardware_interface::JointHandle joints_[N_DOF];
-            double commands_[N_DOF];
+            double q_des_[N_DOF];
 
-            ros::Subscriber sub_command1_;
-            ros::Subscriber sub_command2_;
-            ros::Subscriber sub_command3_;
-            ros::Subscriber sub_command4_;
-            ros::Subscriber sub_command5_;
-            ros::Subscriber sub_command6_;
+            ros::Subscriber sub_q1_des_;
+            ros::Subscriber sub_q2_des_;
+            ros::Subscriber sub_q3_des_;
+            ros::Subscriber sub_q4_des_;
+            ros::Subscriber sub_q5_des_;
+            ros::Subscriber sub_q6_des_;
 
             control_toolbox::Pid pidControllers_[N_DOF];
 

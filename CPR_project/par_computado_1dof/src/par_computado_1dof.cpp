@@ -82,7 +82,7 @@ namespace par_computado_1dof_ns {
             pidController_.initPid(pid_params_.p, pid_params_.i, pid_params_.d, 100.0, -100.0);            
 
             /* --- Initialize subscriber for desired position (for manual control) --- */
-            sub_q_des_ = n.subscribe<std_msgs::Float64>("q_des_command", 1, &ParComputado1Dof::setCommandCB, this);
+            sub_q_des_ = n.subscribe<std_msgs::Float64>("q_des_command", 1, &ParComputado1Dof::set_q_des_CB, this);
 
             /* --- Initialize publishers for datalogging purposes --- */
             pub_q_des_ = n.advertise<std_msgs::Float64>("q_des" , 1);
@@ -157,7 +157,7 @@ namespace par_computado_1dof_ns {
         }
 
         /* --- Callback function for desired position subscriber (for manual control) --- */
-        void setCommandCB(const std_msgs::Float64ConstPtr& msg){
+        void set_q_des_CB(const std_msgs::Float64ConstPtr& msg){
 
             q_des_ = msg->data;
         }

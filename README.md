@@ -24,7 +24,7 @@ substituting Y with the joint position (rad)
 The parameters for the controller in this simulation are located in "irb120_moveit_config/config/ros_controllers.yaml"
 The joints can also be manually controlled by executing:  
 
-	rostopic pub -1 /arm_group_controller/commandX std_msgs/Float64 "data: Y"
+	rostopic pub -1 /arm_group_controller/qX_des_command std_msgs/Float64 "data: Y"
 
 substituting X with the joint number (1-6) and Y with the joint position (rad)
 
@@ -35,6 +35,6 @@ The parameters for the controller in this simulation are located in "irb120/conf
 
 The joints can be manually controlled by executing:  
 
-	rostopic pub -1 /irb120/joints_positions_controller/commandX std_msgs/Float64 "data: Y"
+	rostopic pub -1 /irb120/joints_positions_controller/qX_des_command std_msgs/Float64 "data: Y"
 
 substituting X with the joint number (1-6) and Y with the joint position (rad)
