@@ -24,13 +24,11 @@
 
 namespace my_pid_6dof_ns {
 
+    typedef actionlib::ActionServer<control_msgs::FollowJointTrajectoryAction>                  ActionServer;
+    typedef boost::shared_ptr<ActionServer>                                                     ActionServerPtr;
+    typedef ActionServer::GoalHandle                                                            GoalHandle;
+
     class MyPid6Dof : public controller_interface::Controller<hardware_interface::EffortJointInterface> {
-
-        typedef actionlib::ActionServer<control_msgs::FollowJointTrajectoryAction>                  ActionServer;
-        typedef boost::shared_ptr<ActionServer>                                                     ActionServerPtr;
-        typedef ActionServer::GoalHandle                                                            GoalHandle;
-
-        ActionServerPtr    action_server_;
 
         bool init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle &n) {
 
@@ -171,6 +169,7 @@ namespace my_pid_6dof_ns {
 
             std::vector<std::string> joint_names_;
 
+            ActionServerPtr action_server_;
             bool has_active_goal_ = false;
             GoalHandle active_goal_;
     };
