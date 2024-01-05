@@ -1,0 +1,3 @@
+<library path="lib/libpar_computado_6dof_lib">
+    <class name="par_computado_6dof/ParComputado6Dof" type="par_computado_6dof_ns::ParComputado6Dof" base_class_type="controller_interface::ControllerBase"/>
+</library>

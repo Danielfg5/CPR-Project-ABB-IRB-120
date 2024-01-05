@@ -34,7 +34,7 @@ controller_list:
       - joint_5
       - joint_6
 arm_group_controller:
-  type: my_pid_6dof/MyPid6Dof
+  type: par_computado_6dof/ParComputado6Dof
   joints:
     - joint_1
     - joint_2
