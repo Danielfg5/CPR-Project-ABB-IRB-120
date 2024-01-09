@@ -9,14 +9,13 @@ project(my_pid_6dof)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   actionlib
-  actionlib
   actionlib_msgs
   controller_interface
   controller_manager
-  gazebo_ros
   hardware_interface
   pluginlib
   roscpp
+  my_custom_msgs
 )
 
 ## System dependencies are found with CMake's conventions

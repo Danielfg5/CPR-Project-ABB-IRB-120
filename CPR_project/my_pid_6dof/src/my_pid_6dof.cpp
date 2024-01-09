@@ -2,6 +2,7 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <pluginlib/class_list_macros.h>
 #include <std_msgs/Float64.h>
+#include "my_custom_msgs/SixJointsValues.h"
 #include <control_toolbox/pid.h>
 #include <time.h>
 #include <string>
@@ -72,6 +73,10 @@ namespace my_pid_6dof_ns {
             sub_q5_des_ = n.subscribe<std_msgs::Float64>("q5_des_command", 1, &MyPid6Dof::set_q5_des_CB, this);
             sub_q6_des_ = n.subscribe<std_msgs::Float64>("q6_des_command", 1, &MyPid6Dof::set_q6_des_CB, this);
 
+            pub_q_des_ = n.advertise<my_custom_msgs::SixJointsValues>("q_des" , 1);
+            pub_error_ = n.advertise<my_custom_msgs::SixJointsValues>("error" , 1);
+            pub_commanded_effort_ = n.advertise<my_custom_msgs::SixJointsValues>("commanded_effort" , 1);
+
             /* --- Initialize action server --- */
             action_server_.reset(new ActionServer(n, "/arm_group_controller/follow_joint_trajectory", 
                                     boost::bind(&MyPid6Dof::goalCB,   this, _1),
@@ -83,12 +88,14 @@ namespace my_pid_6dof_ns {
         }
 
         void update(const ros::Time& time, const ros::Duration& period){
-            
+
             for(int i=0; i<N_DOF; i++){
-                double error = q_des_[i] - joints_[i].getPosition();
-                double commanded_effort = pidControllers_[i].computeCommand(error, period);
-                joints_[i].setCommand(commanded_effort);
+                error[i] = q_des_[i] - joints_[i].getPosition();
+                commanded_effort[i] = pidControllers_[i].computeCommand(error[i], period);
+                joints_[i].setCommand(commanded_effort[i]);
             }
+
+            publishMessages();
         }
 
         /* --- Callback functions for desired position subscribers (for manual control) --- */
@@ -148,9 +155,41 @@ namespace my_pid_6dof_ns {
         void starting(const ros::Time& time) {}
         void stopping(const ros::Time& time) {}
 
+        void publishMessages(void){
+
+            my_custom_msgs::SixJointsValues q_des_msg;
+                q_des_msg.joint1 = q_des_[0];
+                q_des_msg.joint2 = q_des_[1];
+                q_des_msg.joint3 = q_des_[2];
+                q_des_msg.joint4 = q_des_[3];
+                q_des_msg.joint5 = q_des_[4];
+                q_des_msg.joint6 = q_des_[5];
+                pub_q_des_.publish(q_des_msg);
+
+            my_custom_msgs::SixJointsValues error_msg;
+                error_msg.joint1 = error[0];
+                error_msg.joint2 = error[1];
+                error_msg.joint3 = error[2];
+                error_msg.joint4 = error[3];
+                error_msg.joint5 = error[4];
+                error_msg.joint6 = error[5];
+                pub_error_.publish(error_msg);
+
+            my_custom_msgs::SixJointsValues commanded_effort_msg;
+                commanded_effort_msg.joint1 = commanded_effort[0];
+                commanded_effort_msg.joint2 = commanded_effort[1];
+                commanded_effort_msg.joint3 = commanded_effort[2];
+                commanded_effort_msg.joint4 = commanded_effort[3];
+                commanded_effort_msg.joint5 = commanded_effort[4];
+                commanded_effort_msg.joint6 = commanded_effort[5];
+                pub_commanded_effort_.publish(commanded_effort_msg);
+        }
+
         private:
             hardware_interface::JointHandle joints_[N_DOF];
             double q_des_[N_DOF];
+            double error[N_DOF];
+            double commanded_effort[N_DOF];
 
             ros::Subscriber sub_q1_des_;
             ros::Subscriber sub_q2_des_;
@@ -158,6 +197,10 @@ namespace my_pid_6dof_ns {
             ros::Subscriber sub_q4_des_;
             ros::Subscriber sub_q5_des_;
             ros::Subscriber sub_q6_des_;
+
+            ros::Publisher pub_q_des_;
+            ros::Publisher pub_error_;
+            ros::Publisher pub_commanded_effort_;
 
             control_toolbox::Pid pidControllers_[N_DOF];
 
