@@ -1,6 +1,0 @@
-irb120_rviz:				irb120 in rviz
-pendulum_gazebo:			my_1dof_robot in gazebo
-pendulum_rviz_fortyfive:		my_1dof_robot in rviz with final pose 45° highlighted
-pendulum_rviz_planning_fortyfive:	my_1dof_robot in rviz with trajectory from 0 to 45° planned
-pend_step_1:				step response of pendulum with error in sign of gravity compensation
-pend_step_2:				step response of pendulum with gravity compensation corrected

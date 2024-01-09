@@ -15,11 +15,23 @@ find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   pluginlib
   roscpp
+  orocos_kdl
+  kdl_parser
+  my_custom_msgs
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIRS})
+add_definitions(${EIGEN3_DEFINITIONS})
+
+find_package(orocos_kdl REQUIRED)
+# Find the absolute path to the orocos-kdl library
+find_library(orocos_kdl_LIBRARY NAMES ${orocos_kdl_LIBRARIES} PATHS
+${orocos_kdl_LIBRARY_DIRS} NO_DEFAULT_PATH)
+set(orocos_kdl_LIBRARIES ${orocos_kdl_LIBRARY})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -111,6 +123,8 @@ catkin_package(
 #  LIBRARIES par_computado_6dof
 #  CATKIN_DEPENDS actionlib actionlib_msgs controller_interface controller_manager hardware_interface pluginlib roscpp
 #  DEPENDS system_lib
+  DEPENDS orocos_kdl
+  CATKIN_DEPENDS kdl_parser
 )
 
 ###########

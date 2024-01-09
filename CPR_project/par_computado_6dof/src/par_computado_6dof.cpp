@@ -2,10 +2,16 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <pluginlib/class_list_macros.h>
 #include <std_msgs/Float64.h>
+#include "my_custom_msgs/SixJointsValues.h"
 #include <time.h>
 #include <string>
 #include <cmath>
-#include "Eigen/Core"
+#include <Eigen/Core>
+#include <kdl/kdl.hpp>
+#include <kdl_parser/kdl_parser.hpp>
+#include <kdl/chainidsolver_recursive_newton_euler.hpp>
+#include <kdl/chaindynparam.hpp>
+#include <kdl/frames_io.hpp>
 
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -21,7 +27,7 @@
 #include <joint_trajectory_controller/init_joint_trajectory.h>
 #include <joint_trajectory_controller/hardware_interface_adapter.h>
 
-#define N_DOF   6
+#define N_DOF 6
 
 namespace par_computado_6dof_ns {
 
@@ -33,17 +39,40 @@ namespace par_computado_6dof_ns {
 
         bool init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle &n) {
 
-            /* --- Initialize controller gain matrices to zero --- */
+            /* --- Initialize controller matrices to zero --- */
             Kp.setZero();
             Ki.setZero();
             Kd.setZero();
-
-            /********** DEBUG **********/
-            M_ = Eigen::Matrix<double, N_DOF, N_DOF>::Identity();
+            M_.setZero();
             V_.setZero();
             G_.setZero();
             F_.setZero();
-            /***************************/
+
+            // Load robot model from the parameter server
+            std::string robot_description;
+
+            if(!n.getParam("/robot_description", robot_description)){
+                ROS_ERROR("Failed to get robot description.");
+                return false;
+            }
+
+            
+            if (!kdl_parser::treeFromString(robot_description, kdl_tree)) {
+                ROS_ERROR("Failed to construct KDL tree from URDF");
+                return false;
+            }
+
+            // Specify the chain you want to work with
+            std::string root_link = "base_link";
+            std::string tip_link = "link_6";
+            
+            if (!kdl_tree.getChain(root_link, tip_link, kdl_chain)) {
+                ROS_ERROR("Failed to get KDL chain");
+                return false;
+            }
+
+            // Create a KDL chainDynParam solver
+            KDL::ChainDynParam dyn_param_solver(kdl_chain, KDL::Vector(0, 0, -g));
 
             /* --- Load parameters from the parameter server --- */
             if(!n.getParam("joints", joint_names_)){
@@ -93,6 +122,14 @@ namespace par_computado_6dof_ns {
             sub_q5_des_ = n.subscribe<std_msgs::Float64>("q5_des_command", 1, &ParComputado6Dof::set_q5_des_CB, this);
             sub_q6_des_ = n.subscribe<std_msgs::Float64>("q6_des_command", 1, &ParComputado6Dof::set_q6_des_CB, this);
 
+            /* --- Initialize publishers for datalogging purposes --- */
+            pub_q_des_ = n.advertise<my_custom_msgs::SixJointsValues>("q_des" , 1);
+            pub_tau_R_ = n.advertise<my_custom_msgs::SixJointsValues>("tau_R" , 1);
+            pub_M_tau_R_ = n.advertise<my_custom_msgs::SixJointsValues>("M_tau_R" , 1);
+            pub_tau_C_ = n.advertise<my_custom_msgs::SixJointsValues>("tau_C" , 1);
+            pub_tau_T_ = n.advertise<my_custom_msgs::SixJointsValues>("tau_T" , 1);
+            pub_error_ = n.advertise<my_custom_msgs::SixJointsValues>("error" , 1);
+
             /* --- Initialize action server --- */
             action_server_.reset(new ActionServer(n, "/arm_group_controller/follow_joint_trajectory", 
                                     boost::bind(&ParComputado6Dof::goalCB,   this, _1),
@@ -105,15 +142,7 @@ namespace par_computado_6dof_ns {
 
         void update(const ros::Time& time, const ros::Duration& period){
             
-            Eigen::Matrix<double, N_DOF, 1> q_;
-            Eigen::Matrix<double, N_DOF, 1> dq_;
-            Eigen::Matrix<double, N_DOF, 1> error;
-            Eigen::Matrix<double, N_DOF, 1> derror;
             static Eigen::Matrix<double, N_DOF, 1> ierror = Eigen::Matrix<double, N_DOF, 1>::Zero();
-
-            // **************  DEBUG ********************
-            ros::Time begin = ros::Time::now();
-            // ******************************************
 
             /* --- Get joint states --- */
             for(int i=0; i<N_DOF; i++){   
@@ -122,29 +151,52 @@ namespace par_computado_6dof_ns {
             }
 
             /* --- Evaluate the dynamics matrices in the current joint states --- */
-            M_ = compute_M(q_);
-            V_ = compute_V(q_, dq_);
-            G_ = compute_G(q_);
-            F_ = compute_F(q_, dq_);
+            KDL::JntArray q_KDL(N_DOF);
+            KDL::JntArray dq_KDL(N_DOF);
+            KDL::JntArray V_KDL(N_DOF);
+            KDL::JntArray G_KDL(N_DOF);
+            KDL::JntSpaceInertiaMatrix M_KDL(N_DOF);
+            KDL::ChainDynParam dynamics_solver(kdl_chain, KDL::Vector(0, 0, -g));
+
+            q_KDL.data = q_;
+            dq_KDL.data = dq_;
+            dynamics_solver.JntToMass(q_KDL, M_KDL);
+            dynamics_solver.JntToCoriolis(q_KDL, dq_KDL, V_KDL);
+            dynamics_solver.JntToGravity(q_KDL, G_KDL);
+
+            M_ = M_KDL.data;
+            V_ = V_KDL.data;
+            G_ = G_KDL.data;
+
+            std::cout << G_ << std::endl;
+
+            /********** DEBUG **********/
+            // M_ = Eigen::Matrix<double, N_DOF, N_DOF>::Identity();
+            // V_.setZero();
+            // G_.setZero();
+            /***************************/
 
             /* --- Control law --- */
             error = q_des_ - q_;
             derror = dq_des_ - dq_;
             ierror += error * period.toSec();
-            tauR = ddq_des_ + Kp * error + Ki * ierror + Kd * derror;
-            tauC = V_ + G_ + F_;
-            tauT = M_ * tauR + tauC;
+            tau_R = ddq_des_ + Kp * error + Ki * ierror + Kd * derror;
+            tau_C = V_ + G_ + F_;
+            tau_T = M_ * tau_R + tau_C;
+            // tau_T = tau_R;
 
             /* --- Apply control torque to the joints --- */
             for(int i=0; i<N_DOF; i++){ 
-                joints_[i].setCommand(tauT(i));
+                joints_[i].setCommand(tau_T(i));
             }
 
+            /* --- Publish messages for datalogging purposes --- */
+            publishMessages();
+
+
             // **************  DEBUG ********************
-            ros::Time end = ros::Time::now();
-            ros::Duration duration = end - begin;
-            // std::cout << duration.toNSec() << std::endl;
-            // ******************************************
+            // ros::Time current_time = ros::Time::now();
+            // ROS_INFO("Current Simulation Time: %f", current_time.toSec());
         }
 
         /* --- Callback functions for desired position subscribers (for manual control) --- */
@@ -200,117 +252,73 @@ namespace par_computado_6dof_ns {
         void starting(const ros::Time& time) {}
         void stopping(const ros::Time& time) {}
 
-        Eigen::Matrix<double, N_DOF, N_DOF> compute_M(Eigen::Matrix<double, N_DOF, 1> q)
-        {
-            Eigen::Matrix<double, N_DOF, N_DOF> M;
+        void publishMessages(void){
 
-            /********** DEBUG **********/
-            M = Eigen::Matrix<double, N_DOF, N_DOF>::Identity();
-            /***************************/
+            my_custom_msgs::SixJointsValues q_des_msg;
+                q_des_msg.joint1 = q_des_(0);
+                q_des_msg.joint2 = q_des_(1);
+                q_des_msg.joint3 = q_des_(2);
+                q_des_msg.joint4 = q_des_(3);
+                q_des_msg.joint5 = q_des_(4);
+                q_des_msg.joint6 = q_des_(5);
+                pub_q_des_.publish(q_des_msg);
 
-            /* --------- EXAMPLE --------- */
-            // M(0,0) = 0.22356*cos(q(2)) - 0.056921*sin(2.0*q(2)) - 0.059165*sin(2.0*q(1)) + 0.0059579*cos(q(4)) - 0.42012*sin(q(2)) + 0.16114*cos(q(2))*cos(q(3)) - 0.0053266*cos(q(4))*sin(q(2)) - 0.78465*pow(cos(q(1)),2) - 0.15558*pow(cos(q(2)),2) - 0.070238*pow(cos(q(3)),2) - 0.22356*pow(cos(q(1)),2)*cos(q(2)) + 0.041776*pow(cos(q(1)),2)*cos(q(3)) - 0.0059579*pow(cos(q(1)),2)*cos(q(4)) + 0.041776*pow(cos(q(2)),2)*cos(q(3)) - 0.0059579*pow(cos(q(2)),2)*cos(q(4)) + 0.42012*pow(cos(q(1)),2)*sin(q(2)) + 0.31115*pow(cos(q(1)),2)*pow(cos(q(2)),2) + 0.070238*pow(cos(q(1)),2)*pow(cos(q(3)),2) + 0.070238*pow(cos(q(2)),2)*pow(cos(q(3)),2)  - 0.16114*pow(cos(q(1)),2)*cos(q(2))*cos(q(3)) + 0.22768*cos(q(1))*pow(cos(q(2)),2)*sin(q(1)) + 0.22768*pow(cos(q(1)),2)*cos(q(2))*sin(q(2)) - 0.001381*pow(cos(q(1)),2)*cos(q(3))*sin(q(4)) - 0.001381*pow(cos(q(2)),2)*cos(q(3))*sin(q(4)) - 0.083552*pow(cos(q(1)),2)*pow(cos(q(2)),2)*cos(q(3)) + 0.011916*pow(cos(q(1)),2)*pow(cos(q(2)),2)*cos(q(4)) + 0.42012*cos(q(1))*cos(q(2))*sin(q(1)) - 0.18032*cos(q(1))*cos(q(3))*sin(q(1)) - 0.001381*cos(q(1))*cos(q(4))*sin(q(1)) - 0.18032*cos(q(2))*cos(q(3))*sin(q(2)) - 0.001381*cos(q(2))*cos(q(4))*sin(q(2)) - 0.0053266*cos(q(2))*cos(q(3))*sin(q(4)) - 0.14048*pow(cos(q(1)),2)*pow(cos(q(2)),2)*pow(cos(q(3)),2) + 0.36065*cos(q(1))*pow(cos(q(2)),2)*cos(q(3))*sin(q(1)) + 0.0027619*cos(q(1))*pow(cos(q(2)),2)*cos(q(4))*sin(q(1)) + 0.36065*pow(cos(q(1)),2)*cos(q(2))*cos(q(3))*sin(q(2)) + 0.0027619*pow(cos(q(1)),2)*cos(q(2))*cos(q(4))*sin(q(2)) + 0.0053266*pow(cos(q(1)),2)*cos(q(2))*cos(q(3))*sin(q(4)) + 0.0027619*pow(cos(q(1)),2)*pow(cos(q(2)),2)*cos(q(3))*sin(q(4)) + 0.0011684*pow(cos(q(1)),2)*pow(cos(q(2)),2)*cos(q(5))*sin(q(4)) + 0.0053266*cos(q(1))*cos(q(2))*cos(q(4))*sin(q(1)) - 0.31115*cos(q(1))*cos(q(2))*sin(q(1))*sin(q(2)) + 0.16114*cos(q(1))*cos(q(3))*sin(q(1))*sin(q(2)) + 0.0059579*cos(q(1))*cos(q(3))*sin(q(1))*sin(q(4)) + 0.0059579*cos(q(2))*cos(q(3))*sin(q(2))*sin(q(4)) + 0.14048*cos(q(1))*cos(q(2))*pow(cos(q(3)),2)*sin(q(1))*sin(q(2)) - 0.011916*cos(q(1))*pow(cos(q(2)),2)*cos(q(3))*sin(q(1))*sin(q(4)) - 0.011916*pow(cos(q(1)),2)*cos(q(2))*cos(q(3))*sin(q(2))*sin(q(4))  - 0.0011684*cos(q(1))*pow(cos(q(2)),2)*sin(q(1))*sin(q(3))*sin(q(5)) - 0.0011684*pow(cos(q(1)),2)*cos(q(2))*sin(q(2))*sin(q(3))*sin(q(5)) + 0.083552*cos(q(1))*cos(q(2))*cos(q(3))*sin(q(1))*sin(q(2)) - 0.011916*cos(q(1))*cos(q(2))*cos(q(4))*sin(q(1))*sin(q(2)) - 0.0053266*cos(q(1))*cos(q(3))*sin(q(1))*sin(q(2))*sin(q(4)) - 0.0027619*cos(q(1))*cos(q(2))*cos(q(3))*sin(q(1))*sin(q(2))*sin(q(4)) - 0.0011684*cos(q(1))*cos(q(2))*cos(q(5))*sin(q(1))*sin(q(2))*sin(q(4)) + 0.0011684*cos(q(1))*pow(cos(q(2)),2)*cos(q(3))*cos(q(4))*cos(q(5))*sin(q(1)) + 0.0011684*pow(cos(q(1)),2)*cos(q(2))*cos(q(3))*cos(q(4))*cos(q(5))*sin(q(2)) - 0.0011959*cos(q(1))*pow(cos(q(2)),2)*cos(q(3))*cos(q(4))*sin(q(1))*sin(q(4));
-            // M(1,1) = 1;
-            // M(2,2) = 1;
-            // M(3,3) = 1;
-            // M(4,4) = 1;
-            // M(5,5) = 1;
+            my_custom_msgs::SixJointsValues tau_R_msg;
+                tau_R_msg.joint1 = tau_R(0);
+                tau_R_msg.joint2 = tau_R(1);
+                tau_R_msg.joint3 = tau_R(2);
+                tau_R_msg.joint4 = tau_R(3);
+                tau_R_msg.joint5 = tau_R(4);
+                tau_R_msg.joint6 = tau_R(5);
+                pub_tau_R_.publish(tau_R_msg);
 
-            // M(0,1) = 0;
-            // M(0,2) = 0;
-            // M(0,3) = 0;
-            // M(0,4) = 0;
-            // M(0,5) = 0;
-            // M(1,2) = 0;
-            // M(1,3) = 0;
-            // M(1,4) = 0;
-            // M(1,5) = 0;
-            // M(2,3) = 0;
-            // M(2,4) = 0;
-            // M(2,5) = 0;
-            // M(3,4) = 0;
-            // M(3,5) = 0;
-            // M(4,5) = 0;
+            my_custom_msgs::SixJointsValues M_tau_R_msg;
+                M_tau_R_msg.joint1 = (M_ * tau_R)(0);
+                M_tau_R_msg.joint2 = (M_ * tau_R)(1);
+                M_tau_R_msg.joint3 = (M_ * tau_R)(2);
+                M_tau_R_msg.joint4 = (M_ * tau_R)(3);
+                M_tau_R_msg.joint5 = (M_ * tau_R)(4);
+                M_tau_R_msg.joint6 = (M_ * tau_R)(5);
+                pub_M_tau_R_.publish(M_tau_R_msg);
 
-            // M(1,0) = M(0,1);
-            // M(2,0) = M(0,2);
-            // M(3,0) = M(0,3);
-            // M(4,0) = M(0,4);
-            // M(5,0) = M(0,5);
-            // M(2,1) = M(1,2);
-            // M(3,1) = M(1,3);
-            // M(4,1) = M(1,4);
-            // M(5,1) = M(1,5);
-            // M(3,2) = M(2,3);
-            // M(4,2) = M(2,4);
-            // M(5,2) = M(2,5);
-            // M(4,3) = M(3,4);
-            // M(5,3) = M(3,5);
-            // M(5,4) = M(4,5);
-            /* --------------------------- */
+            my_custom_msgs::SixJointsValues tau_C_msg;
+                tau_C_msg.joint1 = tau_C(0);
+                tau_C_msg.joint2 = tau_C(1);
+                tau_C_msg.joint3 = tau_C(2);
+                tau_C_msg.joint4 = tau_C(3);
+                tau_C_msg.joint5 = tau_C(4);
+                tau_C_msg.joint6 = tau_C(5);
+                pub_tau_C_.publish(tau_C_msg);
 
-            return M;
-        }
-        Eigen::Matrix<double, N_DOF, 1> compute_V(Eigen::Matrix<double, N_DOF, 1> q, Eigen::Matrix<double, N_DOF, 1> dq)
-        {
-            Eigen::Matrix<double, N_DOF, 1> V;
+            my_custom_msgs::SixJointsValues tau_T_msg;
+                tau_T_msg.joint1 = tau_T(0);
+                tau_T_msg.joint2 = tau_T(1);
+                tau_T_msg.joint3 = tau_T(2);
+                tau_T_msg.joint4 = tau_T(3);
+                tau_T_msg.joint5 = tau_T(4);
+                tau_T_msg.joint6 = tau_T(5);
+                pub_tau_T_.publish(tau_T_msg);
 
-            /********** DEBUG **********/
-            V.setZero();
-            /***************************/
-
-            /* --------- EXAMPLE --------- */
-            // V(0) = 0;
-            // V(1) = q(2) + dq(2);
-            // V(2) = 0;
-            // V(3) = 0;
-            // V(4) = 0;
-            // V(5) = 0;
-            /* --------------------------- */
-
-            return V;
-        }
-        Eigen::Matrix<double, N_DOF, 1> compute_G(Eigen::Matrix<double, N_DOF, 1> q)
-        {
-            Eigen::Matrix<double, N_DOF, 1> G;
-
-            /********** DEBUG **********/
-            G.setZero();
-            /***************************/
-
-            /* --------- EXAMPLE --------- */
-            // G(0) = 0;
-            // G(1) = 0.1*g*cos(q(1));
-            // G(2) = 0;
-            // G(3) = 0;
-            // G(4) = 0;
-            // G(5) = 0;
-            /* --------------------------- */
-
-            return G;
-        }
-        Eigen::Matrix<double, N_DOF, 1> compute_F(Eigen::Matrix<double, N_DOF, 1> q, Eigen::Matrix<double, N_DOF, 1> dq)
-        {
-            Eigen::Matrix<double, N_DOF, 1> F;
-
-            /********** DEBUG **********/
-            F.setZero();
-            /***************************/
-
-            /* --------- EXAMPLE --------- */
-            // F(0) = 0;
-            // F(1) = 0;
-            // F(2) = 0;
-            // F(3) = 0;
-            // F(4) = 0;
-            // F(5) = 0;
-            /* --------------------------- */
-
-            return F;
+            my_custom_msgs::SixJointsValues error_msg;
+                error_msg.joint1 = error(0);
+                error_msg.joint2 = error(1);
+                error_msg.joint3 = error(2);
+                error_msg.joint4 = error(3);
+                error_msg.joint5 = error(4);
+                error_msg.joint6 = error(5);
+                pub_error_.publish(error_msg);
         }
 
         private:
             hardware_interface::JointHandle joints_[N_DOF];
+
+            KDL::Tree kdl_tree;
+            KDL::Chain kdl_chain;
+
+            Eigen::Matrix<double, N_DOF, 1> q_;
+            Eigen::Matrix<double, N_DOF, 1> dq_;
+            Eigen::Matrix<double, N_DOF, 1> error;
+            Eigen::Matrix<double, N_DOF, 1> derror;
             
             Eigen::Matrix<double, N_DOF, 1> q_des_;
             Eigen::Matrix<double, N_DOF, 1> dq_des_;
@@ -323,9 +331,9 @@ namespace par_computado_6dof_ns {
             Eigen::Matrix<double, N_DOF, N_DOF> Kp;
             Eigen::Matrix<double, N_DOF, N_DOF> Ki;
             Eigen::Matrix<double, N_DOF, N_DOF> Kd;
-            Eigen::Matrix<double, N_DOF, 1> tauC;
-            Eigen::Matrix<double, N_DOF, 1> tauR;
-            Eigen::Matrix<double, N_DOF, 1> tauT;
+            Eigen::Matrix<double, N_DOF, 1> tau_C;
+            Eigen::Matrix<double, N_DOF, 1> tau_R;
+            Eigen::Matrix<double, N_DOF, 1> tau_T;
 
             const double g = 9.81;
 
@@ -335,6 +343,13 @@ namespace par_computado_6dof_ns {
             ros::Subscriber sub_q4_des_;
             ros::Subscriber sub_q5_des_;
             ros::Subscriber sub_q6_des_;
+
+            ros::Publisher pub_q_des_;
+            ros::Publisher pub_tau_R_;
+            ros::Publisher pub_M_tau_R_;
+            ros::Publisher pub_tau_C_;
+            ros::Publisher pub_tau_T_;
+            ros::Publisher pub_error_;
 
             std::vector<std::string> joint_names_;
 
