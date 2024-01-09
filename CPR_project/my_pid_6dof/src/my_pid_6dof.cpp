@@ -47,6 +47,7 @@ namespace my_pid_6dof_ns {
             for(int i=0; i<N_DOF; i++){
                 joints_[i] = hw->getHandle(joint_names_[i]);
                 q_des_[i] = joints_[i].getPosition();        // Initialize desired (target) position to current position
+                dq_des_[i] = 0;
 
                 if (!n.getParam(joint_names_[i] + "_control_params/pid/p", pid_params_[i].p)){
                     ROS_ERROR_STREAM("Failed to get joint \"" << joint_names_[i] << "\" p parameter value.");
@@ -188,7 +189,9 @@ namespace my_pid_6dof_ns {
         private:
             hardware_interface::JointHandle joints_[N_DOF];
             double q_des_[N_DOF];
+            double dq_des_[N_DOF];
             double error[N_DOF];
+            double derror[N_DOF];
             double commanded_effort[N_DOF];
 
             ros::Subscriber sub_q1_des_;
