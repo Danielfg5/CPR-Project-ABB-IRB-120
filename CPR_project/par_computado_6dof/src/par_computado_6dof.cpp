@@ -87,7 +87,7 @@ namespace par_computado_6dof_ns {
 
             for(int i=0; i<N_DOF; i++){
                 joints_[i] = hw->getHandle(joint_names_[i]);
-                q_des_(i) = joints_[i].getPosition();        // Initialize desired (target) position to current position
+                q_des_(i) = joints_[i].getPosition();        // Initialize desired position to current position
                 dq_des_(i) = 0;
                 ddq_des_(i) = 0;
 
@@ -104,15 +104,6 @@ namespace par_computado_6dof_ns {
                     return false;
                 }
             }
-
-            /* --- Print on console output --- */
-            std::cout << std::endl << "************************************" << std::endl;
-            std::cout << "------- KP MATRIX -------" << std::endl;
-            std::cout << Kp << std::endl;
-            std::cout << "------- KI MATRIX -------" << std::endl;
-            std::cout << Ki << std::endl;
-            std::cout << "------- KD MATRIX -------" << std::endl;
-            std::cout << Kd << std::endl;
 
             /* --- Initialize subscribers for desired positions (for manual control) --- */
             sub_q1_des_ = n.subscribe<std_msgs::Float64>("q1_des_command", 1, &ParComputado6Dof::set_q1_des_CB, this);
@@ -168,14 +159,6 @@ namespace par_computado_6dof_ns {
             V_ = V_KDL.data;
             G_ = G_KDL.data;
 
-            std::cout << G_ << std::endl;
-
-            /********** DEBUG **********/
-            // M_ = Eigen::Matrix<double, N_DOF, N_DOF>::Identity();
-            // V_.setZero();
-            // G_.setZero();
-            /***************************/
-
             /* --- Control law --- */
             error = q_des_ - q_;
             derror = dq_des_ - dq_;
@@ -183,7 +166,6 @@ namespace par_computado_6dof_ns {
             tau_R = ddq_des_ + Kp * error + Ki * ierror + Kd * derror;
             tau_C = V_ + G_ + F_;
             tau_T = M_ * tau_R + tau_C;
-            // tau_T = tau_R;
 
             /* --- Apply control torque to the joints --- */
             for(int i=0; i<N_DOF; i++){ 
@@ -192,11 +174,6 @@ namespace par_computado_6dof_ns {
 
             /* --- Publish messages for datalogging purposes --- */
             publishMessages();
-
-
-            // **************  DEBUG ********************
-            // ros::Time current_time = ros::Time::now();
-            // ROS_INFO("Current Simulation Time: %f", current_time.toSec());
         }
 
         /* --- Callback functions for desired position subscribers (for manual control) --- */
@@ -310,19 +287,16 @@ namespace par_computado_6dof_ns {
         }
 
         private:
-            hardware_interface::JointHandle joints_[N_DOF];
 
-            KDL::Tree kdl_tree;
-            KDL::Chain kdl_chain;
+            const double g = 9.81;
 
             Eigen::Matrix<double, N_DOF, 1> q_;
             Eigen::Matrix<double, N_DOF, 1> dq_;
-            Eigen::Matrix<double, N_DOF, 1> error;
-            Eigen::Matrix<double, N_DOF, 1> derror;
-            
             Eigen::Matrix<double, N_DOF, 1> q_des_;
             Eigen::Matrix<double, N_DOF, 1> dq_des_;
             Eigen::Matrix<double, N_DOF, 1> ddq_des_;
+            Eigen::Matrix<double, N_DOF, 1> error;
+            Eigen::Matrix<double, N_DOF, 1> derror;
 
             Eigen::Matrix<double, N_DOF, N_DOF> M_;
             Eigen::Matrix<double, N_DOF, 1> V_;
@@ -334,8 +308,6 @@ namespace par_computado_6dof_ns {
             Eigen::Matrix<double, N_DOF, 1> tau_C;
             Eigen::Matrix<double, N_DOF, 1> tau_R;
             Eigen::Matrix<double, N_DOF, 1> tau_T;
-
-            const double g = 9.81;
 
             ros::Subscriber sub_q1_des_;
             ros::Subscriber sub_q2_des_;
@@ -351,7 +323,11 @@ namespace par_computado_6dof_ns {
             ros::Publisher pub_tau_T_;
             ros::Publisher pub_error_;
 
+            hardware_interface::JointHandle joints_[N_DOF];
             std::vector<std::string> joint_names_;
+
+            KDL::Tree kdl_tree;
+            KDL::Chain kdl_chain;
 
             ActionServerPtr action_server_;
             bool has_active_goal_ = false;
