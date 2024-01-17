@@ -74,6 +74,7 @@ namespace my_pid_6dof_ns {
             sub_q5_des_ = n.subscribe<std_msgs::Float64>("q5_des_command", 1, &MyPid6Dof::set_q5_des_CB, this);
             sub_q6_des_ = n.subscribe<std_msgs::Float64>("q6_des_command", 1, &MyPid6Dof::set_q6_des_CB, this);
 
+            pub_q_ = n.advertise<my_custom_msgs::SixJointsValues>("q" , 1);
             pub_q_des_ = n.advertise<my_custom_msgs::SixJointsValues>("q_des" , 1);
             pub_error_ = n.advertise<my_custom_msgs::SixJointsValues>("error" , 1);
             pub_commanded_effort_ = n.advertise<my_custom_msgs::SixJointsValues>("commanded_effort" , 1);
@@ -91,8 +92,11 @@ namespace my_pid_6dof_ns {
         void update(const ros::Time& time, const ros::Duration& period){
 
             for(int i=0; i<N_DOF; i++){
-                error[i] = q_des_[i] - joints_[i].getPosition();
-                commanded_effort[i] = pidControllers_[i].computeCommand(error[i], period);
+                q_[i] = joints_[i].getPosition();
+                dq_[i] = joints_[i].getVelocity();
+                error[i] = q_des_[i] - q_[i];
+                derror[i] = dq_des_[i] - dq_[i];
+                commanded_effort[i] = pidControllers_[i].computeCommand(error[i], derror[i], period);
                 joints_[i].setCommand(commanded_effort[i]);
             }
 
@@ -141,6 +145,7 @@ namespace my_pid_6dof_ns {
             int n = traj.points.size();            
             for (int i=0; i<6; i++){                
                 q_des_[i] = traj.points[n-1].positions[i];
+                dq_des_[i] = traj.points[n-1].velocities[i];
             }
 
         }
@@ -157,6 +162,15 @@ namespace my_pid_6dof_ns {
         void stopping(const ros::Time& time) {}
 
         void publishMessages(void){
+
+            my_custom_msgs::SixJointsValues q_msg;
+                q_msg.joint1 = q_[0];
+                q_msg.joint2 = q_[1];
+                q_msg.joint3 = q_[2];
+                q_msg.joint4 = q_[3];
+                q_msg.joint5 = q_[4];
+                q_msg.joint6 = q_[5];
+                pub_q_.publish(q_msg);
 
             my_custom_msgs::SixJointsValues q_des_msg;
                 q_des_msg.joint1 = q_des_[0];
@@ -188,6 +202,8 @@ namespace my_pid_6dof_ns {
 
         private:
             hardware_interface::JointHandle joints_[N_DOF];
+            double q_[N_DOF];
+            double dq_[N_DOF];
             double q_des_[N_DOF];
             double dq_des_[N_DOF];
             double error[N_DOF];
@@ -201,6 +217,7 @@ namespace my_pid_6dof_ns {
             ros::Subscriber sub_q5_des_;
             ros::Subscriber sub_q6_des_;
 
+            ros::Publisher pub_q_;
             ros::Publisher pub_q_des_;
             ros::Publisher pub_error_;
             ros::Publisher pub_commanded_effort_;
