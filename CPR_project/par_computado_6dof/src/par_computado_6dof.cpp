@@ -166,9 +166,9 @@ namespace par_computado_6dof_ns {
             // Eigen::Matrix<double, N_DOF, N_DOF> dM;
             // Eigen::Matrix<double, N_DOF, 1> dV;
             // Eigen::Matrix<double, N_DOF, 1> dG;
-            // dM = 0.15 * M_;
-            // dG = -0.15 * G_;
-            // dV = 0.15 * V_;
+            // dM = 0.3 * M_;
+            // dG = -0.3 * G_;
+            // dV = 0.3 * V_;
             // M_ += dM;
             // V_ += dV;
             // G_ += dG;
