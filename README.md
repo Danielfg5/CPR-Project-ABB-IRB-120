@@ -4,7 +4,7 @@ Final project for the course "Control y Programación de Robots" at Universidad 
 
 It consists of the development of a "Par Computado" inverse dynamics controller in ROS, then applied and tested on a simulated ABB IRB 120 manipulator robot.
 
-## Dependencies:
+## Dependencies
 
 This project depends on the following packages and libraries, which are easily installed with apt:
 
