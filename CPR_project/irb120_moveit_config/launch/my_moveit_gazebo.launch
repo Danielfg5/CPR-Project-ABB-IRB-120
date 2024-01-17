@@ -4,4 +4,9 @@
     <include file="$(find irb120_moveit_config)/launch/gazebo.launch"/>
     <include file="$(find irb120_moveit_config)/launch/moveit_rviz.launch"/>
 
+    <node name="plotjuggler_with_layout" 
+          pkg="plotjuggler"
+          type="plotjuggler"
+          args="--layout $(find irb120_moveit_config)/config/plotjuggler_config1.xml" />
+
 </launch>
