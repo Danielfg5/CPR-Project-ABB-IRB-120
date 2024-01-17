@@ -31,6 +31,7 @@ pendulum_controller:
     pid:
       p: 2500.0
       i: 0.0
+      # i: 100.0
       d: 100.0
       # p: 100.0
       # i: 0.0
@@ -41,3 +42,9 @@ pendulum_controller:
       c: 0.0
       m: 0.5
       l: 1.0
+    # model_params:
+    #   I: 0.2
+    #   b: 1.2
+    #   c: 0.0
+    #   m: 0.6
+    #   l: 1.2

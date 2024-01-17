@@ -83,6 +83,7 @@ namespace par_computado_1dof_ns {
             sub_q_des_ = n.subscribe<std_msgs::Float64>("q_des_command", 1, &ParComputado1Dof::set_q_des_CB, this);
 
             /* --- Initialize publishers for datalogging purposes --- */
+            pub_q_ = n.advertise<std_msgs::Float64>("q" , 1);
             pub_q_des_ = n.advertise<std_msgs::Float64>("q_des" , 1);
             pub_dq_des_ = n.advertise<std_msgs::Float64>("dq_des" , 1);
             pub_ddq_des_ = n.advertise<std_msgs::Float64>("ddq_des" , 1);
@@ -120,6 +121,7 @@ namespace par_computado_1dof_ns {
             
             joint_.setCommand(commanded_effort);
 
+            std_msgs::Float64 q_msg;
             std_msgs::Float64 q_des_msg;
             std_msgs::Float64 dq_des_msg;
             std_msgs::Float64 ddq_des_msg;
@@ -132,6 +134,7 @@ namespace par_computado_1dof_ns {
             std_msgs::Float64 d_error_msg;
             double pe, ie, de;
             pidController_.getCurrentPIDErrors(&pe, &ie, &de);
+            q_msg.data = q_;
             q_des_msg.data = q_des_;
             dq_des_msg.data = dq_des_;
             ddq_des_msg.data = ddq_des_;
@@ -142,6 +145,7 @@ namespace par_computado_1dof_ns {
             p_error_msg.data = pe;
             i_error_msg.data = ie;
             d_error_msg.data = de;
+            pub_q_.publish(q_msg);
             pub_q_des_.publish(q_des_msg);
             pub_dq_des_.publish(dq_des_msg);
             pub_ddq_des_.publish(ddq_des_msg);
@@ -197,6 +201,7 @@ namespace par_computado_1dof_ns {
             double ddq_des_;
 
             ros::Subscriber sub_q_des_;
+            ros::Publisher pub_q_;
             ros::Publisher pub_q_des_;
             ros::Publisher pub_dq_des_;
             ros::Publisher pub_ddq_des_;
