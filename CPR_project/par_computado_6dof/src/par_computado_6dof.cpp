@@ -114,6 +114,7 @@ namespace par_computado_6dof_ns {
             sub_q6_des_ = n.subscribe<std_msgs::Float64>("q6_des_command", 1, &ParComputado6Dof::set_q6_des_CB, this);
 
             /* --- Initialize publishers for datalogging purposes --- */
+            pub_q_ = n.advertise<my_custom_msgs::SixJointsValues>("q" , 1);
             pub_q_des_ = n.advertise<my_custom_msgs::SixJointsValues>("q_des" , 1);
             pub_tau_R_ = n.advertise<my_custom_msgs::SixJointsValues>("tau_R" , 1);
             pub_M_tau_R_ = n.advertise<my_custom_msgs::SixJointsValues>("M_tau_R" , 1);
@@ -158,6 +159,22 @@ namespace par_computado_6dof_ns {
             M_ = M_KDL.data;
             V_ = V_KDL.data;
             G_ = G_KDL.data;
+
+            /* -------------- ROBUSTNESS TEST -------------- */
+            /* ------ Adding uncertainty in the model ------ */
+
+            // Eigen::Matrix<double, N_DOF, N_DOF> dM;
+            // Eigen::Matrix<double, N_DOF, 1> dV;
+            // Eigen::Matrix<double, N_DOF, 1> dG;
+            // dM = 0.15 * M_;
+            // dG = -0.15 * G_;
+            // dV = 0.15 * V_;
+            // M_ += dM;
+            // V_ += dV;
+            // G_ += dG;
+
+            /* ---------------------------------------------- */
+            /* ---------------------------------------------- */
 
             /* --- Control law --- */
             error = q_des_ - q_;
@@ -215,7 +232,6 @@ namespace par_computado_6dof_ns {
                 dq_des_(i) = traj.points[n-1].velocities[i];
                 // ddq_des_(i) = traj.points[n-1].accelerations[i];
             }
-
         }
 
         void cancelCB(GoalHandle gh)
@@ -230,6 +246,15 @@ namespace par_computado_6dof_ns {
         void stopping(const ros::Time& time) {}
 
         void publishMessages(void){
+
+            my_custom_msgs::SixJointsValues q_msg;
+                q_msg.joint1 = q_(0);
+                q_msg.joint2 = q_(1);
+                q_msg.joint3 = q_(2);
+                q_msg.joint4 = q_(3);
+                q_msg.joint5 = q_(4);
+                q_msg.joint6 = q_(5);
+                pub_q_.publish(q_msg);
 
             my_custom_msgs::SixJointsValues q_des_msg;
                 q_des_msg.joint1 = q_des_(0);
@@ -316,6 +341,7 @@ namespace par_computado_6dof_ns {
             ros::Subscriber sub_q5_des_;
             ros::Subscriber sub_q6_des_;
 
+            ros::Publisher pub_q_;
             ros::Publisher pub_q_des_;
             ros::Publisher pub_tau_R_;
             ros::Publisher pub_M_tau_R_;
