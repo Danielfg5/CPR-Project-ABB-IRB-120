@@ -68,22 +68,18 @@ To test the effect of model uncertainties in the Par Computado controller, comme
 
 ## Project folder structure
 
-- `par_computado_6dof`: it contains the code for the 6-DOF Par Computado controller we developed. Relevant files:
-	- `par_computado_6dof.cpp`, inside `src`: it contains the source code of the controller
+- `par_computado_6dof`: it contains the code for the 6-DOF Par Computado controller we developed.
 - `irb120_moveit_config`: it contains the Moveit! configuration for the simulation of the ABB IRB 120 robot. Most relevant files:
 	- `my_moveit_gazebo.launch`, inside `launch`: main launch file for the simulation
 	- `ros_controllers.yaml`, inside `config`: it contains the parameters for the joints controller
 	- `abb_irb120_model.srdf`, inside `config`: it contains the standard test poses we defined
 - `irb120`: it contains the simulation model of the ABB IRB 120 robot. Most relevant files:
 	- `irb120.urdf`, inside `urdf` folder: it contains the URDF description of the robot
-- `par_computado_1dof`: it contains the code for the 1-DOF Par Computado controller we developed. Relevant files:
-	- `par_computado_1dof.cpp`, inside `src`: it contains the source code of the controller
+- `par_computado_1dof`: it contains the code for the 1-DOF Par Computado controller we developed.
 - `my_1dof_robot`: it contains the simulation model of the 1-DOF pendulum robot
 - `my_1dof_robot_moveit_config`: it contains the Moveit! configuration for the simulation of the 1-DOF pendulum robot
-- `my_pid_6dof`: it contains the code for the 6-DOF PID controller we developed. Relevant files:
-	- `my_pid_6dof.cpp`, inside `src`: it contains the source code of the controller
-- `my_pid_controller1`: it contains the code for the 1-DOF PID controller we developed. Relevant files:
-	- `my_pid_controller1.cpp`, inside `src`: it contains the source code of the controller
+- `my_pid_6dof`: it contains the code for the 6-DOF PID controller we developed.
+- `my_pid_controller1`: it contains the code for the 1-DOF PID controller we developed.
 - `my_custom_msgs`: it contains the custom message `SixJointValues` we defined to send 6 joint quantities in a single message
 
 
