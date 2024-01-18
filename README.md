@@ -46,9 +46,7 @@ The parameters for the controller in this simulation are located in `irb120_move
 
 ### How to test the effect of model uncertainties in the Par Computado controller
 
-To test the effect of model uncertainties in the Par Computado controller, open the source code of the controller, located in `par_computado_6dof/src/par_computado_6dof.cpp`.
-
-Then, inside the `void update()` function, uncomment the lines under the section "ROBUSTNESS TEST".
+To test the effect of model uncertainties in the Par Computado controller, change the value of `robustness_test` from `false` to `true` in `irb120_moveit_config/config/ros_controllers.yaml`. This will introduce a 30% error in the robot dynamics matrices used in the Par Computado logic.
 
 ## How to launch the 1-DOF pendulum simulation
 

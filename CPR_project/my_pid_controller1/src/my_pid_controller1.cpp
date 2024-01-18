@@ -9,9 +9,10 @@ namespace my_pid_controller1_ns {
 
     class MyPidController1 : public controller_interface::Controller<hardware_interface::EffortJointInterface> {
 
+        /* ----- Controller initialization function ----- */
         bool init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle &n) {
             
-            /* --- Load parameters from the parameter server (set through joints_controllers.yaml) --- */
+            /* --- Load parameters from the parameter server --- */
             std::string joint_name_;
             if(!n.getParam("joint", joint_name_)){
                 ROS_ERROR("Could not find joint name.");
@@ -43,6 +44,7 @@ namespace my_pid_controller1_ns {
             return true;
         }
 
+        /* ----- Controller loop update function ----- */
         void update(const ros::Time& time, const ros::Duration& period){
             
             double error = command_ - joint_.getPosition();
@@ -50,7 +52,7 @@ namespace my_pid_controller1_ns {
             joint_.setCommand(commanded_effort);
         }
 
-        /* --- Callback function for desired position subscriber --- */
+        /* ----- Callback function for desired position subscriber ----- */
         void setCommandCB(const std_msgs::Float64ConstPtr& msg){
 
             command_ = msg->data;

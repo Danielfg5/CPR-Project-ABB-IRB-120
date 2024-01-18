@@ -11,7 +11,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <geometry_msgs/PoseStamped.h>
 
-#include "actionlib/server/simple_action_server.h"
+#include <actionlib/server/simple_action_server.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <control_msgs/JointTrajectoryAction.h>
 
@@ -30,16 +30,17 @@ namespace par_computado_1dof_ns {
 
     class ParComputado1Dof : public controller_interface::Controller<hardware_interface::EffortJointInterface> {
 
+        /* ----- Controller initialization function ----- */
         bool init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle &n) {
 
-            /* --- Load parameters from the parameter server --- */
+            /* ----- Load parameters from the parameter server ----- */
             if(!n.getParam("joint", joint_name_)){
                 ROS_ERROR("Failed to get joint parameter.");
                 return false;
             }
             
             joint_ = hw->getHandle(joint_name_);
-            q_des_ = joint_.getPosition();        // Initialize desired (target) position to current position
+            q_des_ = joint_.getPosition();        // Initialize desired position to current position
             dq_des_ = 0;
             ddq_des_ = 0;
 
@@ -76,35 +77,27 @@ namespace par_computado_1dof_ns {
                 return false;
             }
 
-            /* --- Initialize PID controller --- */
+            /* ----- Initialize PID controller ----- */
             pidController_.initPid(pid_params_.p, pid_params_.i, pid_params_.d, 100.0, -100.0);            
 
-            /* --- Initialize subscriber for desired position (for manual control) --- */
+            /* ----- Initialize subscriber for desired position (for manual control) ----- */
             sub_q_des_ = n.subscribe<std_msgs::Float64>("q_des_command", 1, &ParComputado1Dof::set_q_des_CB, this);
 
-            /* --- Initialize publishers for datalogging purposes --- */
+            /* ----- Initialize publishers for datalogging purposes ----- */
             pub_q_ = n.advertise<std_msgs::Float64>("q" , 1);
             pub_q_des_ = n.advertise<std_msgs::Float64>("q_des" , 1);
-            pub_dq_des_ = n.advertise<std_msgs::Float64>("dq_des" , 1);
-            pub_ddq_des_ = n.advertise<std_msgs::Float64>("ddq_des" , 1);
-            pub_comp_torque_ = n.advertise<std_msgs::Float64>("comp_torque" , 1);
-            pub_fb_torque_ = n.advertise<std_msgs::Float64>("fb_torque" , 1);
             pub_comm_effort_ = n.advertise<std_msgs::Float64>("commanded_effort" , 1);
-            pub_error_= n.advertise<std_msgs::Float64>("error" , 1);
-            pub_p_error_ = n.advertise<std_msgs::Float64>("p_error" , 1);
-            pub_i_error_ = n.advertise<std_msgs::Float64>("i_error" , 1);
-            pub_d_error_ = n.advertise<std_msgs::Float64>("d_error" , 1);
 
-            /* --- Initialize action server --- */
+            /* ----- Initialize action server ----- */
             action_server_.reset(new ActionServer(n, "/pendulum_controller/follow_joint_trajectory", 
                                     boost::bind(&ParComputado1Dof::goalCB,   this, _1),
                                     boost::bind(&ParComputado1Dof::cancelCB, this, _1), false));
-
             action_server_->start();
 
             return true;
         }
 
+        /* ----- Controller loop update function ----- */
         void update(const ros::Time& time, const ros::Duration& period){
             
             const double g = 9.81;
@@ -114,104 +107,60 @@ namespace par_computado_1dof_ns {
 
             double error = q_des_ - q_;
             double derror = dq_des_ - dq_;
-            
+
+            /* ----- PAR COMPUTADO CONTROL LAW ----- */
             double computed_torque = model_params_.b * dq_ - 0.5*model_params_.m*g*model_params_.l*sin(q_);
             double feedback_torque = ddq_des_ + pidController_.computeCommand(error, derror, period);
             double commanded_effort = model_params_.I * feedback_torque + computed_torque;
             
+            /* ----- Apply control torque to the joint --- */
             joint_.setCommand(commanded_effort);
 
+            /* --- Publish messages for datalogging purposes --- */
             std_msgs::Float64 q_msg;
             std_msgs::Float64 q_des_msg;
-            std_msgs::Float64 dq_des_msg;
-            std_msgs::Float64 ddq_des_msg;
-            std_msgs::Float64 comp_torque_msg;
-            std_msgs::Float64 fb_torque_msg;
             std_msgs::Float64 comm_effort_msg;
-            std_msgs::Float64 error_msg;
-            std_msgs::Float64 p_error_msg;
-            std_msgs::Float64 i_error_msg;
-            std_msgs::Float64 d_error_msg;
-            double pe, ie, de;
-            pidController_.getCurrentPIDErrors(&pe, &ie, &de);
             q_msg.data = q_;
             q_des_msg.data = q_des_;
-            dq_des_msg.data = dq_des_;
-            ddq_des_msg.data = ddq_des_;
-            comp_torque_msg.data = computed_torque;
-            fb_torque_msg.data = model_params_.I * feedback_torque;
             comm_effort_msg.data = commanded_effort;
-            error_msg.data = error;
-            p_error_msg.data = pe;
-            i_error_msg.data = ie;
-            d_error_msg.data = de;
             pub_q_.publish(q_msg);
             pub_q_des_.publish(q_des_msg);
-            pub_dq_des_.publish(dq_des_msg);
-            pub_ddq_des_.publish(ddq_des_msg);
-            pub_comp_torque_.publish(comp_torque_msg);
-            pub_fb_torque_.publish(fb_torque_msg);
             pub_comm_effort_.publish(comm_effort_msg);
-            pub_error_.publish(error_msg);
-            pub_p_error_.publish(p_error_msg);
-            pub_i_error_.publish(i_error_msg);
-            pub_d_error_.publish(d_error_msg);
         }
 
-        /* --- Callback function for desired position subscriber (for manual control) --- */
+        /* ----- Callback function for desired position subscriber (for manual control) ----- */
         void set_q_des_CB(const std_msgs::Float64ConstPtr& msg){
-
             q_des_ = msg->data;
         }
 
+        /* ----- Callback functions to process Moveit! commands ----- */
         void goalCB(GoalHandle gh)
         {
-            // Cancel current goal (if active)
-            if (has_active_goal_){
-                active_goal_.setCanceled();
-            }
+            trajectory_msgs::JointTrajectory trajectory = gh.getGoal()->trajectory;
 
-            gh.setAccepted();
-            active_goal_ = gh;
-            has_active_goal_ = true;
-
-            trajectory_msgs::JointTrajectory traj = gh.getGoal()->trajectory;
-
-            int n = traj.points.size();                    
-            q_des_ = traj.points[n-1].positions[0];
-            dq_des_ = traj.points[n-1].velocities[0];
-            // ddq_des_ = traj.points[n-1].accelerations[0];
+            int n = trajectory.points.size();                    
+            q_des_ = trajectory.points[n-1].positions[0];
+            dq_des_ = trajectory.points[n-1].velocities[0];
+            // ddq_des_ = trajectory.points[n-1].accelerations[0];
         }
-
         void cancelCB(GoalHandle gh)
         {
-            if (active_goal_ == gh){
-                active_goal_.setCanceled();
-                has_active_goal_ = false;
-            }
+            gh.setCanceled();
         }
 
         void starting(const ros::Time& time) {}
         void stopping(const ros::Time& time) {}
 
         private:
+
+            ActionServerPtr action_server_;
+            
+            std::string joint_name_;
             hardware_interface::JointHandle joint_;
+
             double q_des_;
             double dq_des_;
             double ddq_des_;
-
-            ros::Subscriber sub_q_des_;
-            ros::Publisher pub_q_;
-            ros::Publisher pub_q_des_;
-            ros::Publisher pub_dq_des_;
-            ros::Publisher pub_ddq_des_;
-            ros::Publisher pub_comp_torque_;
-            ros::Publisher pub_fb_torque_;
-            ros::Publisher pub_comm_effort_;
-            ros::Publisher pub_error_;
-            ros::Publisher pub_p_error_;
-            ros::Publisher pub_i_error_;
-            ros::Publisher pub_d_error_;
 
             control_toolbox::Pid pidController_;
 
@@ -229,11 +178,10 @@ namespace par_computado_1dof_ns {
                 double l;
             } model_params_;
 
-            std::string joint_name_;
-
-            ActionServerPtr action_server_;
-            bool has_active_goal_ = false;
-            GoalHandle active_goal_;
+            ros::Subscriber sub_q_des_;
+            ros::Publisher pub_q_;
+            ros::Publisher pub_q_des_;
+            ros::Publisher pub_comm_effort_;
     };
 
     PLUGINLIB_EXPORT_CLASS(par_computado_1dof_ns::ParComputado1Dof, controller_interface::ControllerBase);

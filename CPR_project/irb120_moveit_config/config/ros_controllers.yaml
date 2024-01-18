@@ -44,6 +44,8 @@ arm_group_controller:
     - joint_5
     - joint_6
 
+  robustness_test: false
+
   joint_1_control_params:
     pid:
       p: 625.0
